@@ -4,7 +4,6 @@ This is the code for MATH4432 Project 1: Multi-Class Classification on MNIST Dat
 **The current version of code is modified after deadline. In commits after deadline, I just wrote the README.md file and separated codes into different files to make it more readable.**  
 **For the version before deadline, please [click here](https://github.com/LucenZhao/MNIST_handwritten_digit_classification/tree/71374ac3ddf85072b848ccd2011ba29cdfb681bb).**
 
-
 ## Requirements
 * Python 3.5.4
 * NumPy 1.12.1
