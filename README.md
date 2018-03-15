@@ -1,8 +1,10 @@
 # MNIST_handwritten_digit_classification
 
-This is the code for MATH4432 Project 1: Multi-Class Classification on MNIST Database. For details of this project, please refer to this report.<br/>
-<span style="color:red">**The current version of code is modified after deadline. In commits after deadline, I just wrote the README.md file and separated codes into different files to make it more readable.**<br/>
-For the version before deadline, please [click here](https://github.com/LucenZhao/MNIST_handwritten_digit_classification/tree/71374ac3ddf85072b848ccd2011ba29cdfb681bb). :)</span>
+This is the code for MATH4432 Project 1: Multi-Class Classification on MNIST Database. For details of this project, please refer to this report.
+```diff
++ **The current version of code is modified after deadline. In commits after deadline, I just wrote the README.md file and separated codes into different files to make it more readable.**  
++ For the version before deadline, please [click here](https://github.com/LucenZhao/MNIST_handwritten_digit_classification/tree/71374ac3ddf85072b848ccd2011ba29cdfb681bb). :)
+```
 
 ## Requirements
 * Python 3.5.4
@@ -14,11 +16,11 @@ For the version before deadline, please [click here](https://github.com/LucenZha
 * Matplotlib 2.2.0
 
 ## Download Data
-The MNIST database can be downloaded from the following links:
-Info: [https://web.stanford.edu/~hastie/ElemStatLearn/datasets/zip.info.txt](https://web.stanford.edu/~hastie/ElemStatLearn/datasets/zip.info.txt)<br/>
-Training (1.7M): [https://web.stanford.edu/~hastie/ElemStatLearn/datasets/zip.train.gz](https://web.stanford.edu/~hastie/ElemStatLearn/datasets/zip.info.txt)<br/>
-Test (429K): [https://web.stanford.edu/~hastie/ElemStatLearn/datasets/zip.test.gz](https://web.stanford.edu/~hastie/ElemStatLearn/datasets/zip.test.gz)<br/>
-Please **decompress** the data before run the code.<br/>
+The MNIST database can be downloaded from the following links:  
+Info: [https://web.stanford.edu/~hastie/ElemStatLearn/datasets/zip.info.txt](https://web.stanford.edu/~hastie/ElemStatLearn/datasets/zip.info.txt)  
+Training (1.7M): [https://web.stanford.edu/~hastie/ElemStatLearn/datasets/zip.train.gz](https://web.stanford.edu/~hastie/ElemStatLearn/datasets/zip.info.txt)  
+Test (429K): [https://web.stanford.edu/~hastie/ElemStatLearn/datasets/zip.test.gz](https://web.stanford.edu/~hastie/ElemStatLearn/datasets/zip.test.gz)  
+Please **decompress** the data before run the code.  
 **Please do not use data from other sources because the data I used is different from the original MNIST database.**
 
 ## Produce Results
@@ -42,5 +44,5 @@ hist = {'take': False, 'h': [4], 'w': [4]}
 grad = {'take': True, 'class': 'hist'}
 chain = {'take': True, 'class': 'hist'}
 ```
-<br/>
+  
 The results are saved in the output **results.txt** file. 
