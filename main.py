@@ -1,141 +1,169 @@
-import tensorflow as tf
-from sklearn.discriminant_analysis import LinearDiscriminantAnalysis, QuadraticDiscriminantAnalysis
-from sklearn.linear_model import LogisticRegression
-from sklearn.neighbors import KNeighborsClassifier
-from sklearn.feature_selection import chi2, SelectPercentile
-from sklearn.metrics import classification_report, confusion_matrix, roc_curve
-from sklearn.model_selection import KFold, cross_val_score
 from preprocess import extract_data, visualize
-from feature_extraction import mnist_features
-from feature_selection import select_feats
-from models import LogisticReg
-import numpy as np
+from utils import get_feats, cross_valid, final_result, plot_ROC
+import config
+
 
 def main():
-   # load and preprocess data
-   train_labels, train_imgs = extract_data('data/zip.train')
-   test_labels, test_imgs = extract_data('data/zip.test')
-   
-   # feature extraction
-   train_feats = []
-   test_feats = []
-   num_train = len(train_imgs)
-   num_test = len(test_imgs)
-   plain = True  # set parameters for feature extraction
-   pool = {'take': False, 'class': 'max'}
-   hist = {'take': False, 'h': [4], 'w': [4]}
-   grad = {'take': True, 'class': 'hist'}
-   chain = {'take': True, 'class': 'hist'}
-   
-   print("Extract feature from training data set...")
-   for i, img in enumerate(train_imgs):
-      img_feats = mnist_features(img=img, plain=plain, pool=pool, hist=hist, grad=grad, chain=chain)
-      train_feats.append(img_feats.feats)
-      if i % 500 == 0:
-         print(str(i)+" / "+str(num_train)+" images processed.")
-   train_feats = np.array(train_feats)
+    # load and preprocess data
+    train_labels, train_imgs = extract_data(config.train_path)
+    test_labels, test_imgs = extract_data(config.test_path)
+    f = open(config.output_file, 'w')
 
-   print("Extract feature from testing data set...")
-   for i, img in enumerate(test_imgs):
-      img_feats = mnist_features(img=img, plain=plain, pool=pool, hist=hist, grad=grad, chain=chain)
-      test_feats.append(img_feats.feats)
-      if i % 500 == 0:
-         print(str(i)+" / "+str(num_test)+" images processed.")
-   test_feats = np.array(test_feats)
+    # model selection
+    if config.select_model is True:
+        print("Selecting model...")
+        f.write("Scores for model selection:\n")
+        # original image
+        plain = True  # set parameters for feature extraction
+        pool = {'take': False, 'class': 'max'}
+        hist = {'take': False, 'h': [4], 'w': [4]}
+        grad = {'take': False, 'class': 'hist'}
+        chain = {'take': False, 'class': 'hist'}
+        select_feats1 = get_feats(train_imgs, plain,
+                                  pool, hist, grad, chain)
 
-   print("All data processed. Number of features extracted is "+str(len(train_feats[0])))
-   
-   '''
-   select_model = SelectPercentile(chi2, percentile=30)
-   select_model.fit(train_feats, train_labels)
-   train_selected = select_model.transform(train_feats)
-   test_selected = select_model.transform(test_feats)
-   '''
+        # feature vector
+        pool = {'take': False, 'class': 'max'}
+        hist = {'take': True, 'h': [4], 'w': [4]}
+        grad = {'take': True, 'class': 'hist'}
+        chain = {'take': True, 'class': 'hist'}
+        select_feats2 = get_feats(train_imgs, plain,
+                                  pool, hist, grad, chain)
 
+        # get cross-validation scores
+        f.write("Baseline (original image):" + '\n')
+        print("logistic regression models:")
+        scores = cross_valid(config.models_select1,
+                             select_feats1, train_labels)
+        print(scores)
+        for i, s in enumerate(scores):
+            f.write(config.names1[i] + ':' + str(scores[i]) + '\n')
+        print("multi-class logistic regression models:")
+        scores = cross_valid(config.models_select2,
+                             select_feats1, train_labels)
+        print(scores)
+        for i, s in enumerate(scores):
+            f.write(config.names2[i] + ':' + str(scores[i]) + '\n')
+        print("k-nearest neighbour models:")
+        scores = cross_valid(config.models_select3,
+                             select_feats1, train_labels)
+        print(scores)
+        for i, s in enumerate(scores):
+            f.write(config.names3[i] + ':' + str(scores[i]) + '\n')
 
-   lda = LinearDiscriminantAnalysis()
-   qda = QuadraticDiscriminantAnalysis()
-   #lr1 = LogisticRegression()
-   lr1 = LogisticRegression(solver='newton-cg')
-   #lr3 = LogisticRegression(solver='lbfgs')
-   lr2 = LogisticRegression(multi_class='multinomial', solver='newton-cg')
-   #lr5 = LogisticRegression(multi_class='multinomial', solver='lbfgs')
-   kn1 = KNeighborsClassifier(n_neighbors=1)
-   kn2 = KNeighborsClassifier(n_neighbors=3)
-   #kn3 = KNeighborsClassifier(n_neighbors=10)
-   k_fold = KFold(n_splits=3)
-#   score1 = sum(cross_val_score(lr1, train_feats, train_labels, cv=k_fold, scoring='accuracy')) / 3
-#   score2 = sum(cross_val_score(lr2, train_feats, train_labels, cv=k_fold, scoring='accuracy')) / 3
-#   score3 = sum(cross_val_score(lr3, train_feats, train_labels, cv=k_fold, scoring='accuracy')) / 3
-#   print(score1)
-#   print(score2)
-#   print(score3)
-#   score1 = sum(cross_val_score(kn1, train_feats, train_labels, cv=k_fold, scoring='accuracy')) / 3
-#   score2 = sum(cross_val_score(kn2, train_feats, train_labels, cv=k_fold, scoring='accuracy')) / 3
-#   score3 = sum(cross_val_score(kn3, train_feats, train_labels, cv=k_fold, scoring='accuracy')) / 3
-#   print(score1)
-#   print(score2)
-#   print(score3)
-#   score1 = sum(cross_val_score(lr4, train_feats, train_labels, cv=k_fold, scoring='accuracy')) / 3
-#   score2 = sum(cross_val_score(lr5, train_feats, train_labels, cv=k_fold, scoring='accuracy')) / 3
-#   print(score1)
-#   print(score2)
+        f.write("\nFeature vector:" + '\n')
+        scores = cross_valid(config.models_select1,
+                             select_feats2, train_labels)
+        print(scores)
+        for i, s in enumerate(scores):
+            f.write(config.names1[i] + ':' + str(scores[i]) + '\n')
+        print("multi-class logistic regression models:")
+        scores = cross_valid(config.models_select2,
+                             select_feats2, train_labels)
+        print(scores)
+        for i, s in enumerate(scores):
+            f.write(config.names2[i] + ':' + str(scores[i]) + '\n')
+        print("k-nearest neighbour models:")
+        scores = cross_valid(config.models_select3,
+                             select_feats2, train_labels)
+        print(scores)
+        for i, s in enumerate(scores):
+            f.write(config.names3[i] + ':' + str(scores[i]) + '\n')
 
-#   models = [lda]
-#   for i, clf in enumerate(models):
-#      clf.fit(train_feats, train_labels)
-#      preds = clf.predict(test_feats)
-#      preds_proba = clf.predict_proba(test_feats)
-#      scores_3 = preds_proba[:,3]
-#      scores_4 = preds_proba[:,4]
-#      scores_8 = preds_proba[:,8]
-#      scores_9 = preds_proba[:,9]
-#      scores_8 = np.reshape(scores_8, (-1,))
-#      scores_9 = np.reshape(scores_9, (-1,))
-#      scores_3 = np.reshape(scores_3, (-1,))
-#      scores_4 = np.reshape(scores_4, (-1,))   
-#      print("Current model is "+str(i))
-#      print(sum(preds == test_labels))
-#      print(sum(preds != test_labels))
-#      print(sum(preds != test_labels) / len(test_labels))
-#      print(classification_report(test_labels, preds))
-#      print(confusion_matrix(test_labels, preds))
-#      fpr_3, tpr_3, _ = roc_curve(test_labels, scores_3, pos_label=3)
-#      fpr_4, tpr_4, _ = roc_curve(test_labels, scores_4, pos_label=4)
-#      fpr_8, tpr_8, _ = roc_curve(test_labels, scores_8, pos_label=8)
-#      fpr_9, tpr_9, _ = roc_curve(test_labels, scores_9, pos_label=9)
-#      print(fpr_3)
-#      print(tpr_3)
-#      import matplotlib.pyplot as plt      
-#      plt.figure(1)
-#      plt.plot([0, 1], [0, 1], 'k--')
-#      plt.plot(fpr_3, tpr_3, label='Scores for 3')
-#      plt.plot(fpr_4, tpr_4, label='Scores for 4')
-#      plt.plot(fpr_8, tpr_8, label='Scores for 8')
-#      plt.plot(fpr_9, tpr_9, label='Scores for 9')
-#      plt.xlabel('False positive rate')
-#      plt.ylabel('True positive rate')
-#      plt.title('ROC curve')
-#      plt.legend(loc='best')
-#      plt.savefig("report/lda_roc.png", pad_inches = 0)
-#      plt.show()
+        f.write("\n######################\n\n")
 
+    # feature selection
+    if config.select_feature is True:
+        print("Selecting features...")
+        f.write("Scores for feature selection:\n")
+        plain = True  # set parameters for feature extraction
+        pool = {'take': False, 'class': 'max'}
+        hist = {'take': False, 'h': [4], 'w': [4]}
+        grad = {'take': False, 'class': 'hist'}
+        chain = {'take': False, 'class': 'hist'}
 
-   models = [lr1]
-   for i, clf in enumerate(models):
-#      score = sum(cross_val_score(clf, train_feats, train_labels, cv=k_fold, scoring='accuracy')) / 3
-#      print(score)
-      clf.fit(train_feats, train_labels)
-      preds = clf.predict(test_feats)
-      print("Current model is "+str(i))
-      print(sum(preds == test_labels))
-      print(sum(preds != test_labels))
-      print(sum(preds != test_labels) / len(test_labels))
-      print(classification_report(test_labels, preds))
-      print(confusion_matrix(test_labels, preds))
-      err_imgs = test_imgs[preds != test_labels]
-      err_labels = test_labels[preds != test_labels]
-      visualize(err_labels, err_imgs)
+        # histogram
+        hist['take'] = True
+        print("Extract histogram from training data set...")
+        f.write("\nHistogram:\n")
+        select_feats = get_feats(train_imgs, plain, pool, hist, grad, chain)
+        scores = cross_valid(config.models, select_feats, train_labels)
+        print(scores)
+        for i, s in enumerate(scores):
+            f.write(config.names[i] + ':' + str(scores[i]) + '\n')
+
+        # gradient histogram
+        hist['take'] = False
+        grad['take'] = True
+        print("Extract gradient histogram from training data set...")
+        f.write("\nGradient histogram:\n")
+        select_feats = get_feats(train_imgs, plain, pool, hist, grad, chain)
+        scores = cross_valid(config.models, select_feats, train_labels)
+        print(scores)
+        for i, s in enumerate(scores):
+            f.write(config.names[i] + ':' + str(scores[i]) + '\n')
+
+        # gradient image
+        grad['class'] = 'plain'
+        print("Extract gradient image from training data set...")
+        f.write("\nGradient image:\n")
+        select_feats = get_feats(train_imgs, plain, pool, hist, grad, chain)
+        scores = cross_valid(config.models, select_feats, train_labels)
+        print(scores)
+        for i, s in enumerate(scores):
+            f.write(config.names[i] + ':' + str(scores[i]) + '\n')
+
+        # chain code histogram
+        grad['take'] = False
+        chain['take'] = True
+        print("Extract chain code histogram from training data set...")
+        f.write("\nChain code histogram:\n")
+        select_feats = get_feats(train_imgs, plain, pool, hist, grad, chain)
+        scores = cross_valid(config.models, select_feats, train_labels)
+        print(scores)
+        for i, s in enumerate(scores):
+            f.write(config.names[i] + ':' + str(scores[i]) + '\n')
+
+        f.write("\n######################\n\n")
+
+    if config.produce_results is True or config.draw_ROC is True:
+        # feature extraction
+        print("Extract feature from training data set...")
+        train_feats = get_feats(train_imgs, config.plain, config.pool,
+                                config.hist, config.grad, config.chain)
+        print("Extract feature from testing data set...")
+        test_feats = get_feats(test_imgs, config.plain, config.pool,
+                               config.hist, config.grad, config.chain)
+        print("All data processed. Number of features extracted is " +
+              str(len(train_feats[0])))
+
+        if config.produce_results is True:
+            print("Producing prediction results...")
+            f.write("Prediction results\n")
+            f.write('original image: ' + str(config.plain))
+            f.write('\n')
+            f.write('pooled:' + str(config.pool))
+            f.write('\n')
+            f.write('histogram:' + str(config.hist))
+            f.write('\n')
+            f.write('gradient:' + str(config.grad))
+            f.write('\n')
+            f.write('chain code:' + str(config.chain))
+            f.write('\n\n')
+            all_preds = final_result(config.models, config.names, train_feats,
+                                     train_labels, test_feats, test_labels, f)
+
+            if config.visualize_error is True:
+                preds = all_preds[2]
+                err_imgs = test_imgs[preds != test_labels]
+                err_labels = test_labels[preds != test_labels]
+                visualize(err_labels, err_imgs)
+
+        if config.draw_ROC is True:
+            print("Drawing ROC for LDA model...")
+            preds_proba = plot_ROC(config.lda, train_feats, train_labels,
+                                   test_feats, test_labels)
+
 
 if __name__ == '__main__':
-   main()
+    main()
